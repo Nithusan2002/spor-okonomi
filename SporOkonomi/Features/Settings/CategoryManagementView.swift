@@ -100,7 +100,7 @@ struct CategoryManagementView: View {
             let category = Category(
                 name: trimmedName,
                 type: input.type,
-                groupKey: Category.defaultGroupKey(forName: trimmedName, type: input.type),
+                groupKey: input.groupKey,
                 isActive: true,
                 sortOrder: sortOrder
             )
@@ -108,7 +108,7 @@ struct CategoryManagementView: View {
         case .edit(let category):
             category.name = trimmedName
             category.type = input.type
-            category.groupKey = Category.defaultGroupKey(forName: trimmedName, type: input.type)
+            category.groupKey = input.groupKey
             category.isActive = input.isActive
         }
 
@@ -148,6 +148,7 @@ private enum CategoryEditorState: Identifiable {
 private struct CategoryEditorInput {
     var name: String
     var type: CategoryType
+    var groupKey: String
     var isActive: Bool
 }
 
@@ -159,6 +160,8 @@ private struct CategoryEditorSheet: View {
 
     @State private var name: String = ""
     @State private var type: CategoryType = .expense
+    @State private var groupKey: String = BudgetGroup.annet.rawValue
+    @State private var groupWasManuallySet = false
     @State private var isActive: Bool = true
 
     private var title: String {
@@ -170,17 +173,43 @@ private struct CategoryEditorSheet: View {
         }
     }
 
+    private var sortedGroups: [BudgetGroup] {
+        BudgetGroup.allCases.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section("Detaljer") {
                     TextField("Navn", text: $name)
                         .textInputAutocapitalization(.sentences)
+                        .onChange(of: name) { _, newValue in
+                            guard case .new = state, !groupWasManuallySet else { return }
+                            groupKey = Category.defaultGroupKey(forName: newValue, type: type)
+                        }
 
                     Picker("Type", selection: $type) {
                         Text("Utgift").tag(CategoryType.expense)
                         Text("Inntekt").tag(CategoryType.income)
                         Text("Sparing").tag(CategoryType.savings)
+                    }
+                    .onChange(of: type) { _, newValue in
+                        guard case .new = state, !groupWasManuallySet else { return }
+                        groupKey = Category.defaultGroupKey(forName: name, type: newValue)
+                    }
+
+                    if type != .income {
+                        Picker("Gruppe", selection: Binding(
+                            get: { groupKey },
+                            set: { newValue in
+                                groupKey = newValue
+                                groupWasManuallySet = true
+                            }
+                        )) {
+                            ForEach(sortedGroups) { group in
+                                Text(group.title).tag(group.rawValue)
+                            }
+                        }
                     }
 
                     Toggle("Aktiv", isOn: $isActive)
@@ -193,17 +222,22 @@ private struct CategoryEditorSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Lagre") {
-                        onSave(CategoryEditorInput(name: name, type: type, isActive: isActive))
+                        onSave(CategoryEditorInput(name: name, type: type, groupKey: groupKey, isActive: isActive))
                         dismiss()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
             .onAppear {
-                if case .edit(let category) = state {
+                switch state {
+                case .new:
+                    groupKey = Category.defaultGroupKey(forName: name, type: type)
+                case .edit(let category):
                     name = category.name
                     type = category.type
+                    groupKey = category.groupKey
                     isActive = category.isActive
+                    groupWasManuallySet = true
                 }
             }
         }
