@@ -54,12 +54,19 @@ struct SporOkonomiApp: App {
             return container
         } catch {
             lastCloudInitError = describe(error)
+#if DEBUG
             lastCloudProbeStatus = runCloudProbe(schema: schema)
             lastCloudCompatibilityAnalysis = runCloudCompatibilityAnalysis()
-#if DEBUG
             print("CloudKit init feilet: \(lastCloudInitError ?? "ukjent feil")")
             print("CloudKit probe: \(lastCloudProbeStatus ?? "ikke kjørt")")
             print("CloudKit analyse: \(lastCloudCompatibilityAnalysis ?? "ingen")")
+#else
+            // Den kombinatoriske probingen (2N+1 ModelContainer-opprettelser) er kun
+            // nyttig for feilsøking under utvikling. I release-builds vil den forsinke
+            // oppstart for enhver bruker uten aktiv iCloud-konto, uten å gi dem noe de
+            // kan bruke til noe.
+            lastCloudProbeStatus = nil
+            lastCloudCompatibilityAnalysis = nil
 #endif
             // Fallback: behold samme lokale store selv om iCloud ikke kan initialiseres.
             do {
