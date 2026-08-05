@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spor QA"
+  short_description: "Review, teststrategi og verifikasjon"
+  default_prompt: "Use $spor-qa to review a change, define test coverage, or prepare a QA report for Spor økonomi."
+policy:
+  allow_implicit_invocation: true

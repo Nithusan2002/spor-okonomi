@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spor iOS"
+  short_description: "SwiftUI- og SwiftData-arbeid i Spor økonomi"
+  default_prompt: "Use $spor-ios-implementering to implement a small SwiftUI or SwiftData change in Spor økonomi."
+policy:
+  allow_implicit_invocation: true

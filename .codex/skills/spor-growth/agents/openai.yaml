@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spor Growth"
+  short_description: "Onboarding, ASO og veksteksperimenter"
+  default_prompt: "Use $spor-growth to improve onboarding, App Store copy, activation, or a small growth experiment for Spor økonomi."
+policy:
+  allow_implicit_invocation: true
