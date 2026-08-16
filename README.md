@@ -132,4 +132,5 @@ Se `LICENSE` for detaljer.
 ## Relaterte filer
 
 - `AGENTS.md` arbeidskontrakt og prosjektregler for agenter
+- `docs/project/` produktbrief, roadmap, teknisk plan og release-readiness
 - `AppStoreConnect-metadata.md` App Store-arbeidsnotater
