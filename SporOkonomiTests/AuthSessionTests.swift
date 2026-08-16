@@ -7,6 +7,7 @@ import Testing
 private typealias Category = SporOkonomi.Category
 private typealias Transaction = SporOkonomi.Transaction
 
+@Suite(.serialized)
 struct AuthSessionTests {
 
     @Test
@@ -628,7 +629,8 @@ struct AuthSessionTests {
         MockURLProtocol.requestHandler = { request in
             if request.url?.path == "/auth/v1/token",
                request.url?.query == "grant_type=pkce" {
-                let body = String(data: request.httpBody ?? Data(), encoding: .utf8) ?? ""
+                let bodyData = try Self.requestBodyData(from: request) ?? Data()
+                let body = String(data: bodyData, encoding: .utf8) ?? ""
                 #expect(body.contains("\"auth_code\":\"oauth-code-123\""))
                 #expect(body.contains("\"code_verifier\":"))
 
@@ -777,6 +779,169 @@ struct AuthSessionTests {
     }
 
     @Test
+    func aiInsightsServiceSendsFunctionRequestContractWithStoredSession() async throws {
+        let configuration = try SupabaseConfiguration.load(
+            projectURLString: "https://example.supabase.co",
+            publishableKey: "publishable-key",
+            redirectScheme: "sporokonomi",
+            redirectHost: "auth-callback"
+        )
+        let tokenStore = MockTokenStore(
+            initialTokens: StoredAuthTokens(
+                accessToken: "stored-access",
+                refreshToken: "stored-refresh",
+                tokenType: "bearer"
+            )
+        )
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: sessionConfiguration)
+        let service = AIInsightsService(
+            configuration: configuration,
+            session: session,
+            tokenStore: tokenStore
+        )
+
+        var capturedRequest: URLRequest?
+        var capturedBody: Data?
+        MockURLProtocol.requestHandler = { request in
+            capturedRequest = request
+            capturedBody = try Self.requestBodyData(from: request)
+
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let data = #"{"summary":"Kort","keyDriver":"Mat","nextStep":"Se over matbudsjettet"}"#.data(using: .utf8)!
+            return (response, data)
+        }
+
+        let result = try await service.fetchInsight(
+            summary: AIInsightRequestSummary(
+                income: 25_000,
+                spent: 10_000,
+                remaining: 15_000,
+                fixedItemsTotal: 7_000,
+                topCategories: [AIInsightCategorySummary(title: "Mat", amount: 3_000)],
+                goal: AIInsightGoalSummary(progress: 0.5, monthlyNeed: 2_000)
+            )
+        )
+
+        #expect(result == AIInsightResponse(summary: "Kort", keyDriver: "Mat", nextStep: "Se over matbudsjettet"))
+
+        let request = try #require(capturedRequest)
+        #expect(request.url?.absoluteString == "https://example.supabase.co/functions/v1/ai-insight")
+        #expect(request.httpMethod == "POST")
+        #expect(request.timeoutInterval == 20)
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+        #expect(request.value(forHTTPHeaderField: "apikey") == "publishable-key")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer stored-access")
+
+        let body = try #require(capturedBody)
+        let decoded = try JSONDecoder().decode(AIInsightRequestSummary.self, from: body)
+        #expect(decoded.income == 25_000)
+        #expect(decoded.spent == 10_000)
+        #expect(decoded.remaining == 15_000)
+        #expect(decoded.fixedItemsTotal == 7_000)
+        #expect(decoded.topCategories == [AIInsightCategorySummary(title: "Mat", amount: 3_000)])
+        #expect(decoded.goal == AIInsightGoalSummary(progress: 0.5, monthlyNeed: 2_000))
+    }
+
+    @Test
+    func aiInsightsServiceSurfacesBackendMessage() async throws {
+        let configuration = try SupabaseConfiguration.load(
+            projectURLString: "https://example.supabase.co",
+            publishableKey: "publishable-key",
+            redirectScheme: nil,
+            redirectHost: nil
+        )
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: sessionConfiguration)
+        let service = AIInsightsService(
+            configuration: configuration,
+            session: session,
+            tokenStore: MockTokenStore(initialTokens: nil)
+        )
+
+        MockURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 503, httpVersion: nil, headerFields: nil)!
+            let data = #"{"message":"Prøv igjen senere"}"#.data(using: .utf8)!
+            return (response, data)
+        }
+
+        do {
+            _ = try await service.fetchInsight(summary: minimalAIInsightSummary())
+            Issue.record("Forventet backend-feil.")
+        } catch AIInsightsServiceError.backend(let message) {
+            #expect(message == "Prøv igjen senere")
+        } catch {
+            Issue.record("Forventet backend-feil, fikk \(error).")
+        }
+    }
+
+    @Test
+    func aiInsightsServiceFallsBackForUnreadableBackendPayload() async throws {
+        let configuration = try SupabaseConfiguration.load(
+            projectURLString: "https://example.supabase.co",
+            publishableKey: "publishable-key",
+            redirectScheme: nil,
+            redirectHost: nil
+        )
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: sessionConfiguration)
+        let service = AIInsightsService(
+            configuration: configuration,
+            session: session,
+            tokenStore: MockTokenStore(initialTokens: nil)
+        )
+
+        MockURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!
+            return (response, Data("ikke json".utf8))
+        }
+
+        do {
+            _ = try await service.fetchInsight(summary: minimalAIInsightSummary())
+            Issue.record("Forventet backend-feil.")
+        } catch AIInsightsServiceError.backend(let message) {
+            #expect(message == "AI-hjelperen er ikke tilgjengelig akkurat nå.")
+        } catch {
+            Issue.record("Forventet backend-feil, fikk \(error).")
+        }
+    }
+
+    @Test
+    func aiInsightsServiceRejectsInvalidSuccessPayload() async throws {
+        let configuration = try SupabaseConfiguration.load(
+            projectURLString: "https://example.supabase.co",
+            publishableKey: "publishable-key",
+            redirectScheme: nil,
+            redirectHost: nil
+        )
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: sessionConfiguration)
+        let service = AIInsightsService(
+            configuration: configuration,
+            session: session,
+            tokenStore: MockTokenStore(initialTokens: nil)
+        )
+
+        MockURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data("{}".utf8))
+        }
+
+        do {
+            _ = try await service.fetchInsight(summary: minimalAIInsightSummary())
+            Issue.record("Forventet invalidResponse-feil.")
+        } catch AIInsightsServiceError.invalidResponse {
+            #expect(Bool(true))
+        } catch {
+            Issue.record("Forventet invalidResponse-feil, fikk \(error).")
+        }
+    }
+
+    @Test
     @MainActor
     func aiInsightSheetUsesMockResponseInDebugBuilds() async {
         let summary = AIInsightRequestSummary(
@@ -801,6 +966,48 @@ struct AuthSessionTests {
 #else
         #expect(Bool(true))
 #endif
+    }
+
+    private func minimalAIInsightSummary() -> AIInsightRequestSummary {
+        AIInsightRequestSummary(
+            income: 0,
+            spent: 0,
+            remaining: 0,
+            fixedItemsTotal: 0,
+            topCategories: [],
+            goal: nil
+        )
+    }
+
+    private static func requestBodyData(from request: URLRequest) throws -> Data? {
+        if let httpBody = request.httpBody {
+            return httpBody
+        }
+
+        guard let stream = request.httpBodyStream else {
+            return nil
+        }
+
+        stream.open()
+        defer { stream.close() }
+
+        var data = Data()
+        let bufferSize = 1024
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+
+        while stream.hasBytesAvailable {
+            let count = stream.read(buffer, maxLength: bufferSize)
+            if count < 0 {
+                throw stream.streamError ?? URLError(.cannotDecodeContentData)
+            }
+            if count == 0 {
+                break
+            }
+            data.append(buffer, count: count)
+        }
+
+        return data
     }
 }
 

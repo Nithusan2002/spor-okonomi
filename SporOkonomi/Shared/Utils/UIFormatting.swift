@@ -73,7 +73,10 @@ func formatMonthName(_ date: Date) -> String {
 
 func formatPeriodKeyAsDate(_ periodKey: String) -> String {
     let parts = periodKey.split(separator: "-")
-    guard parts.count == 2, let year = Int(parts[0]), let month = Int(parts[1]) else {
+    guard parts.count == 2,
+          let year = Int(parts[0]),
+          let month = Int(parts[1]),
+          (1...12).contains(month) else {
         return periodKey
     }
     var components = DateComponents()

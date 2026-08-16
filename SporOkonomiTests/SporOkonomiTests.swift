@@ -51,6 +51,19 @@ struct SporOkonomiTests {
         #expect(monthly > 0)
     }
 
+    @Test func dateServiceRejectsInvalidPeriodKeysWithoutCalendarNormalization() {
+        #expect(DateService.monthStart(from: "2026-00") == nil)
+        #expect(DateService.monthStart(from: "2026-13") == nil)
+        #expect(DateService.monthStart(from: "2026") == nil)
+        #expect(DateService.offsetPeriodKey("2026-13", months: 1) == nil)
+    }
+
+    @Test func formatPeriodKeyAsDateKeepsInvalidPeriodKeysUnchanged() {
+        #expect(formatPeriodKeyAsDate("2026-00") == "2026-00")
+        #expect(formatPeriodKeyAsDate("2026-13") == "2026-13")
+        #expect(formatPeriodKeyAsDate("ikke-en-periode") == "ikke-en-periode")
+    }
+
     @Test @MainActor func goalEditorSavesWealthGoalsIncludingAccounts() async throws {
         let schema = Schema([Goal.self])
         let container = try ModelContainer(for: schema, configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])

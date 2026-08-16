@@ -23,7 +23,8 @@ enum DateService {
         let parts = periodKey.split(separator: "-")
         guard parts.count == 2,
               let year = Int(parts[0]),
-              let month = Int(parts[1]) else { return nil }
+              let month = Int(parts[1]),
+              (1...12).contains(month) else { return nil }
         var comps = DateComponents()
         comps.year = year
         comps.month = month
