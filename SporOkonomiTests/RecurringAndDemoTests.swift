@@ -13,7 +13,7 @@ struct RecurringAndDemoTests {
         let container = try TestModelContainerFactory.makeInMemoryContainer()
         let context = container.mainContext
 
-        let now = Date()
+        let now = Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 1)) ?? .now
         let key = DateService.periodKey(from: now)
         let bounds = DateService.monthBounds(for: now)
         let category = Category(id: "cat_food", name: "Mat", type: .expense, sortOrder: 1)
@@ -36,7 +36,8 @@ struct RecurringAndDemoTests {
             context: context,
             periodKey: key,
             monthStart: bounds.start,
-            monthEnd: bounds.end
+            monthEnd: bounds.end,
+            now: now
         )
 
         let transactions = try context.fetch(FetchDescriptor<Transaction>())
@@ -50,7 +51,7 @@ struct RecurringAndDemoTests {
         let container = try TestModelContainerFactory.makeInMemoryContainer()
         let context = container.mainContext
 
-        let now = Date()
+        let now = Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 1)) ?? .now
         let key = DateService.periodKey(from: now)
         let bounds = DateService.monthBounds(for: now)
         let category = Category(id: "cat_food", name: "Mat", type: .expense, sortOrder: 1)
@@ -73,13 +74,15 @@ struct RecurringAndDemoTests {
             context: context,
             periodKey: key,
             monthStart: bounds.start,
-            monthEnd: bounds.end
+            monthEnd: bounds.end,
+            now: now
         )
         try FixedItemsService.generateForMonth(
             context: context,
             periodKey: key,
             monthStart: bounds.start,
-            monthEnd: bounds.end
+            monthEnd: bounds.end,
+            now: now
         )
 
         let transactions = try context.fetch(FetchDescriptor<Transaction>())
@@ -170,7 +173,7 @@ struct RecurringAndDemoTests {
         let container = try TestModelContainerFactory.makeInMemoryContainer()
         let context = container.mainContext
 
-        let now = Date()
+        let now = Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 1)) ?? .now
         let key = DateService.periodKey(from: now)
         let bounds = DateService.monthBounds(for: now)
         let category = Category(id: "cat_food", name: "Mat", type: .expense, sortOrder: 1)
@@ -192,7 +195,8 @@ struct RecurringAndDemoTests {
             context: context,
             periodKey: key,
             monthStart: bounds.start,
-            monthEnd: bounds.end
+            monthEnd: bounds.end,
+            now: now
         )
         var transactions = try context.fetch(FetchDescriptor<Transaction>())
         #expect(transactions.count == 1)
@@ -207,7 +211,8 @@ struct RecurringAndDemoTests {
             context: context,
             periodKey: key,
             monthStart: bounds.start,
-            monthEnd: bounds.end
+            monthEnd: bounds.end,
+            now: now
         )
 
         transactions = try context.fetch(FetchDescriptor<Transaction>())
@@ -313,7 +318,7 @@ struct RecurringAndDemoTests {
 
     @Test
     @MainActor
-    func demoSeedCreatesMoreThanOneSavingsCategoryInTransactions() throws {
+    func demoSeedUsesSingleV1SavingsCategoryInTransactions() throws {
         let container = try TestModelContainerFactory.makeInMemoryContainer()
         let context = container.mainContext
 
@@ -327,8 +332,7 @@ struct RecurringAndDemoTests {
         )
 
         #expect(savingsCategoryIDs.contains("cat_savings_account"))
-        #expect(savingsCategoryIDs.contains("cat_savings_investing"))
-        #expect(savingsCategoryIDs.count >= 3)
+        #expect(savingsCategoryIDs == ["cat_savings_account"])
     }
 
     @Test

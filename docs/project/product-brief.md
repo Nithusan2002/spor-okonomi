@@ -32,23 +32,25 @@ Spor økonomi skal gjøre det tydelig:
 
 ## MVP-Omfang
 
-Inkludert:
+Inkludert i V1-release:
 - onboarding
 - lokal bruk uten konto
 - valgfri kontoflyt når backend er konfigurert
 - budsjett med inntekt, utgifter, manuell sparing og gruppegrenser
 - faste poster med månedlig auto-opprettelse
 - oversikt med månedens netto og årsstatus
-- mål og spareutfordringer
+- mål
 - investeringsoversikt med månedlige snapshots
 - eksport og import
 - juridiske sider og supportside
 
-Ikke inkludert:
+Ikke inkludert i V1-release:
 - bankintegrasjon
 - automatisk transaksjonsklassifisering
 - flerbruker eller delt budsjett
 - avansert investeringsanalyse
+- spareutfordringer
+- AI-hjelper
 - betalt abonnement som aktiv brukerflyt
 
 ## Produktprinsipper

@@ -331,6 +331,20 @@ final class OverviewViewModel: ObservableObject {
         "Legg til transaksjon"
     }
 
+    func firstBudgetEntryKind(transactions: [Transaction], now: Date = .now) -> TransactionKind {
+        let monthKey = DateService.periodKey(from: now)
+        let hasIncomeThisMonth = transactions.contains {
+            DateService.periodKey(from: $0.date) == monthKey && $0.kind == .income
+        }
+        return hasIncomeThisMonth ? .expense : .income
+    }
+
+    func emptyStatePrimaryCTATitle(transactions: [Transaction], now: Date = .now) -> String {
+        firstBudgetEntryKind(transactions: transactions, now: now) == .income
+            ? "Legg til første inntekt"
+            : "Legg til første utgift"
+    }
+
     func shouldShowMonthlyProgress(status: OverviewBudgetStatus) -> Bool {
         status.hasPlan && status.planned > 0
     }
@@ -455,7 +469,7 @@ final class OverviewViewModel: ObservableObject {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "nb_NO")
         formatter.dateFormat = "d MMM"
-        return formatter.string(from: date).lowercased()
+        return formatter.string(from: date).replacingOccurrences(of: ".", with: "").lowercased()
     }
 
     private func remainingDaysInMonth(from date: Date) -> Int {

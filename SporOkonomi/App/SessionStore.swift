@@ -167,6 +167,12 @@ final class SessionStore: ObservableObject {
             )
 
             guard let session else {
+                self.updatePreference(
+                    preference,
+                    mode: .local,
+                    session: nil,
+                    context: context
+                )
                 self.authErrorMessage = "Kontoen er opprettet. Bekreft e-posten din før du logger inn."
                 return
             }
@@ -255,6 +261,7 @@ final class SessionStore: ObservableObject {
 
         do {
             try await authClient.deleteAccount()
+            authClient.clearStoredSession()
             do {
                 try localAccountCleanup(preference, context)
                 let refreshedPreference = try context.fetch(FetchDescriptor<UserPreference>()).first ?? preference

@@ -315,7 +315,8 @@ struct OverviewView: View {
                 .appBodyStyle()
                 .foregroundStyle(AppTheme.textSecondary)
 
-            Button(viewModel.heroPrimaryCTATitle()) {
+            Button(viewModel.emptyStatePrimaryCTATitle(transactions: transactions)) {
+                navigationState.pendingBudgetTransactionKind = viewModel.firstBudgetEntryKind(transactions: transactions)
                 navigationState.selectedTab = .budget
             }
             .appProminentCTAStyle()

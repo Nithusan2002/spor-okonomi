@@ -3,6 +3,7 @@ import SwiftData
 
 struct BudgetView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var navigationState: AppNavigationState
     @AppStorage("overview_amounts_hidden") private var areAmountsHidden = false
     @Query(sort: \Category.sortOrder) private var categories: [Category]
     @Query(sort: \BudgetMonth.startDate) private var months: [BudgetMonth]
@@ -204,9 +205,13 @@ struct BudgetView: View {
         }
         .onAppear {
             viewModel.ensureMonthExists(context: modelContext, months: months)
+            openPendingBudgetTransactionIfNeeded()
         }
         .onChange(of: viewModel.selectedMonthDate) { _, _ in
             viewModel.ensureMonthExists(context: modelContext, months: months)
+        }
+        .onChange(of: navigationState.pendingBudgetTransactionKind) { _, _ in
+            openPendingBudgetTransactionIfNeeded()
         }
         .alert(
             "Kunne ikke lagre",
@@ -227,5 +232,18 @@ struct BudgetView: View {
         let raw = formatMonthYearShort(date).replacingOccurrences(of: ".", with: "")
         guard let first = raw.first else { return raw }
         return String(first).uppercased() + String(raw.dropFirst())
+    }
+
+    private func openPendingBudgetTransactionIfNeeded() {
+        guard let kind = navigationState.pendingBudgetTransactionKind else { return }
+        navigationState.pendingBudgetTransactionKind = nil
+
+        guard !isReadOnlyMode else {
+            viewModel.persistenceErrorMessage = PersistenceWriteError.readOnlyMode.localizedDescription
+            return
+        }
+
+        addTransactionInitialType = kind
+        viewModel.showAddTransaction = true
     }
 }

@@ -19,7 +19,9 @@ enum AppAmountInput {
         formatter.numberStyle = .decimal
         formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? ""
+        return (formatter.string(from: NSNumber(value: value)) ?? "")
+            .replacingOccurrences(of: "\u{00A0}", with: " ")
+            .replacingOccurrences(of: "\u{202F}", with: " ")
     }
 
     static func formatLive(_ rawText: String) -> String {

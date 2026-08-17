@@ -47,37 +47,41 @@ struct PremiumSettingsView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                heroCard
-                featuresCard
-                whyPremiumCard
-                planCard
-                ctaCard
-                footerLinks
+        if ReleaseFeatureFlags.showPremium {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    heroCard
+                    featuresCard
+                    whyPremiumCard
+                    planCard
+                    ctaCard
+                    footerLinks
+                }
+                .padding(16)
             }
-            .padding(16)
-        }
-        .background(AppTheme.background)
-        .navigationTitle("Premium")
-        .navigationBarTitleDisplayMode(.inline)
-        .alert("Premium kommer snart", isPresented: $showPremiumComingSoon) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Premium-skjermen er klar, men abonnement er ikke koblet til App Store ennå.")
-        }
-        .alert(
-            "Gjenopprett kjøp",
-            isPresented: Binding(
-                get: { restoreResultMessage != nil },
-                set: { if !$0 { restoreResultMessage = nil } }
-            )
-        ) {
-            Button("OK", role: .cancel) {
-                restoreResultMessage = nil
+            .background(AppTheme.background)
+            .navigationTitle("Premium")
+            .navigationBarTitleDisplayMode(.inline)
+            .alert("Premium kommer snart", isPresented: $showPremiumComingSoon) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Premium-skjermen er klar, men abonnement er ikke koblet til App Store ennå.")
             }
-        } message: {
-            Text(restoreResultMessage ?? "")
+            .alert(
+                "Gjenopprett kjøp",
+                isPresented: Binding(
+                    get: { restoreResultMessage != nil },
+                    set: { if !$0 { restoreResultMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {
+                    restoreResultMessage = nil
+                }
+            } message: {
+                Text(restoreResultMessage ?? "")
+            }
+        } else {
+            EmptyView()
         }
     }
 

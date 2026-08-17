@@ -43,6 +43,16 @@ struct SporOkonomiApp: App {
             }
         }
 
+        if ProcessInfo.processInfo.arguments.contains("UITEST_FILE_STORE") {
+            let configuration = ModelConfiguration(url: uiTestStoreURL(), cloudKitDatabase: .none)
+            activeStoreMode = .primaryWithoutCloud
+            do {
+                return try ModelContainer(for: schema, configurations: [configuration])
+            } catch {
+                fatalError("Kunne ikke opprette filbasert store for UI-test: \(error)")
+            }
+        }
+
         let storeURL = localStoreURL()
         do {
             let configuration = ModelConfiguration(url: storeURL, cloudKitDatabase: .automatic)
@@ -108,6 +118,12 @@ struct SporOkonomiApp: App {
         let appSupport = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
             ?? fm.temporaryDirectory
         return appSupport.appendingPathComponent("SimpleBudget.recovery.store")
+    }
+
+    private static func uiTestStoreURL() -> URL {
+        let fm = FileManager.default
+        let identifier = ProcessInfo.processInfo.environment["UITEST_STORE_ID"] ?? UUID().uuidString
+        return fm.temporaryDirectory.appendingPathComponent("SporOkonomiUITests-\(identifier).store")
     }
 
     private static func describe(_ error: Error) -> String {

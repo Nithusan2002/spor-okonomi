@@ -2,6 +2,13 @@ import SwiftUI
 import SwiftData
 import UIKit
 
+enum ReleaseFeatureFlags {
+    static let showAIHelper = false
+    static let showChallenges = false
+    static let showPremium = false
+    static let showTips = false
+}
+
 enum AppTab {
     case overview
     case budget
@@ -39,8 +46,6 @@ enum AppAppearancePreference: String, CaseIterable {
 }
 
 struct AppRootView: View {
-    // Midlertidig skjult i navigasjonen, beholdt i kodebasen for senere aktivering.
-    private let showTipsTab = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query private var preferences: [UserPreference]
@@ -94,9 +99,9 @@ struct AppRootView: View {
                                 .tabItem { Label("Investeringer", systemImage: "chart.line.uptrend.xyaxis") }
                                 .tag(AppTab.investments)
 
-                            if showTipsTab {
+                            if ReleaseFeatureFlags.showTips {
                                 NavigationStack { TipsTriksView() }
-                                    .tabItem { Label("Tips & Triks", systemImage: "lightbulb") }
+                                    .tabItem { Label("Tips", systemImage: "lightbulb") }
                                     .tag(AppTab.tips)
                             }
 

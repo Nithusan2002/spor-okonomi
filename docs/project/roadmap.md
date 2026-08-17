@@ -35,6 +35,9 @@ Prioritert:
 
 Ikke prioritert:
 - bankintegrasjon
+- AI-hjelper
+- spareutfordringer
+- tipsflate
 - ny premiumlogikk
 - avansert analyse
 - større redesign

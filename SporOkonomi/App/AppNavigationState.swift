@@ -13,6 +13,7 @@ enum SettingsRoute: Hashable {
 @MainActor
 final class AppNavigationState: ObservableObject {
     @Published var selectedTab: AppTab = .overview
+    @Published var pendingBudgetTransactionKind: TransactionKind?
     @Published var investmentsFocus: InvestmentsSectionFocus?
     @Published var pendingSettingsRoute: SettingsRoute?
 }

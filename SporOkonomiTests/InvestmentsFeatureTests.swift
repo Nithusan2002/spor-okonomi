@@ -239,7 +239,8 @@ struct InvestmentsFeatureTests {
         #expect(viewModel.isEditingExistingPeriod)
         #expect(viewModel.previousValues[bucket.id] == 100_000)
         #expect(viewModel.existingPeriodValues[bucket.id] == 120_000)
-        #expect(viewModel.previousValue(for: bucket.id) == 120_000)
+        #expect(viewModel.previousValue(for: bucket.id) == 100_000)
+        #expect(viewModel.baselineValues[bucket.id] == 120_000)
         #expect(viewModel.effectiveValue(for: bucket.id) == 120_000)
     }
 

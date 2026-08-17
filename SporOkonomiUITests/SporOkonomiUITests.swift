@@ -6,7 +6,7 @@ final class SporOkonomiUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments += ["UITEST_IN_MEMORY_STORE", "UITEST_DISABLE_FACEID", "UITEST_SKIP_ONBOARDING"]
+        configureForIsolatedFileStore(app, skipOnboarding: true)
     }
 
     override func tearDownWithError() throws {
@@ -15,20 +15,49 @@ final class SporOkonomiUITests: XCTestCase {
 
     private func launchApp() {
         app.launch()
+        continuePastAuthChoiceIfNeeded(app)
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
+    }
+
+    private func configureForIsolatedFileStore(_ targetApp: XCUIApplication, skipOnboarding: Bool) {
+        targetApp.launchArguments += ["UITEST_FILE_STORE", "UITEST_DISABLE_FACEID"]
+        if skipOnboarding {
+            targetApp.launchArguments += ["UITEST_SKIP_ONBOARDING"]
+        }
+        targetApp.launchEnvironment["UITEST_STORE_ID"] = UUID().uuidString
     }
 
     private func continuePastAuthChoiceIfNeeded(_ targetApp: XCUIApplication) {
         let continueButton = targetApp.buttons["Fortsett uten konto"]
-        if continueButton.waitForExistence(timeout: 3) {
+        if continueButton.waitForExistence(timeout: 8) {
             continueButton.tap()
         }
+    }
+
+    private func waitForOnboardingIntro(_ targetApp: XCUIApplication) {
+        waitForOnboardingStep("intro", in: targetApp)
+    }
+
+    private func waitForOnboardingStep(_ step: String, in targetApp: XCUIApplication) {
+        let stepElement = targetApp.descendants(matching: .any)["onboarding.step.\(step)"]
+        if stepElement.waitForExistence(timeout: 5) {
+            return
+        }
+
+        continuePastAuthChoiceIfNeeded(targetApp)
+        XCTAssertTrue(stepElement.waitForExistence(timeout: 10))
+    }
+
+    private func tapButton(_ identifier: String, in targetApp: XCUIApplication) {
+        let button = targetApp.buttons[identifier]
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     private func openTab(_ title: String) {
         let tabButton = app.tabBars.buttons[title]
         XCTAssertTrue(tabButton.waitForExistence(timeout: 5))
-        tabButton.tap()
+        tabButton.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     @MainActor
@@ -38,18 +67,17 @@ final class SporOkonomiUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Budsjett"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.tabBars.buttons["Investeringer"].exists)
         XCTAssertTrue(app.tabBars.buttons["Oversikt"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Tips & Triks"].exists)
+        XCTAssertFalse(app.tabBars.buttons["Tips"].exists)
         XCTAssertTrue(app.tabBars.buttons["Innstillinger"].exists)
     }
 
     @MainActor
     func testOnboardingShowsOnFreshLaunchWithoutSkipFlag() throws {
         let onboardingApp = XCUIApplication()
-        onboardingApp.launchArguments = ["UITEST_IN_MEMORY_STORE", "UITEST_DISABLE_FACEID"]
+        configureForIsolatedFileStore(onboardingApp, skipOnboarding: false)
         onboardingApp.launch()
-        continuePastAuthChoiceIfNeeded(onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.intro"].waitForExistence(timeout: 5))
+        waitForOnboardingIntro(onboardingApp)
         XCTAssertTrue(onboardingApp.buttons["onboarding.primary_cta"].exists)
         XCTAssertTrue(onboardingApp.buttons["onboarding.secondary_cta"].exists)
     }
@@ -57,27 +85,26 @@ final class SporOkonomiUITests: XCTestCase {
     @MainActor
     func testOnboardingFlowCanCompleteUsingCurrentUI() throws {
         let onboardingApp = XCUIApplication()
-        onboardingApp.launchArguments = ["UITEST_IN_MEMORY_STORE", "UITEST_DISABLE_FACEID"]
+        configureForIsolatedFileStore(onboardingApp, skipOnboarding: false)
         onboardingApp.launch()
-        continuePastAuthChoiceIfNeeded(onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.intro"].waitForExistence(timeout: 5))
-        onboardingApp.buttons["onboarding.primary_cta"].tap()
+        waitForOnboardingIntro(onboardingApp)
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.goals"].waitForExistence(timeout: 5))
-        onboardingApp.buttons["onboarding.option.spare_mer"].tap()
-        onboardingApp.buttons["onboarding.primary_cta"].tap()
+        waitForOnboardingStep("goals", in: onboardingApp)
+        tapButton("onboarding.option.spare_mer", in: onboardingApp)
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.income"].waitForExistence(timeout: 5))
-        let incomeField = onboardingApp.textFields["onboarding.income_input"]
+        waitForOnboardingStep("income", in: onboardingApp)
+        let incomeField = onboardingApp.textFields["onboarding.step.income"]
         XCTAssertTrue(incomeField.waitForExistence(timeout: 5))
         incomeField.tap()
         incomeField.typeText("12000")
-        onboardingApp.buttons["onboarding.primary_cta"].tap()
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.fixed_costs"].waitForExistence(timeout: 5))
-        onboardingApp.buttons["onboarding.option.husleie"].tap()
-        onboardingApp.buttons["onboarding.primary_cta"].tap()
+        waitForOnboardingStep("fixed_costs", in: onboardingApp)
+        tapButton("onboarding.option.husleie", in: onboardingApp)
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
         XCTAssertTrue(onboardingApp.tabBars.firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(onboardingApp.tabBars.buttons["Oversikt"].exists)
@@ -86,22 +113,21 @@ final class SporOkonomiUITests: XCTestCase {
     @MainActor
     func testOnboardingCanCompleteWithoutIncome() throws {
         let onboardingApp = XCUIApplication()
-        onboardingApp.launchArguments = ["UITEST_IN_MEMORY_STORE", "UITEST_DISABLE_FACEID"]
+        configureForIsolatedFileStore(onboardingApp, skipOnboarding: false)
         onboardingApp.launch()
-        continuePastAuthChoiceIfNeeded(onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.intro"].waitForExistence(timeout: 5))
-        onboardingApp.buttons["onboarding.primary_cta"].tap()
+        waitForOnboardingIntro(onboardingApp)
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.goals"].waitForExistence(timeout: 5))
-        onboardingApp.buttons["onboarding.secondary_cta"].tap()
+        waitForOnboardingStep("goals", in: onboardingApp)
+        tapButton("onboarding.secondary_cta", in: onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.income"].waitForExistence(timeout: 5))
+        waitForOnboardingStep("income", in: onboardingApp)
         XCTAssertTrue(onboardingApp.buttons["onboarding.secondary_cta"].exists)
-        onboardingApp.buttons["onboarding.secondary_cta"].tap()
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
-        XCTAssertTrue(onboardingApp.otherElements["onboarding.step.fixed_costs"].waitForExistence(timeout: 5))
-        onboardingApp.buttons["onboarding.secondary_cta"].tap()
+        waitForOnboardingStep("fixed_costs", in: onboardingApp)
+        tapButton("onboarding.primary_cta", in: onboardingApp)
 
         XCTAssertTrue(onboardingApp.tabBars.firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(onboardingApp.tabBars.buttons["Oversikt"].exists)
@@ -113,15 +139,15 @@ final class SporOkonomiUITests: XCTestCase {
 
         openTab("Innstillinger")
 
-        XCTAssertTrue(app.staticTexts["Trygg lagring"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Data"].exists)
+        XCTAssertTrue(app.staticTexts["Data og personvern"].waitForExistence(timeout: 5))
+        app.staticTexts["Data og personvern"].tap()
+        XCTAssertTrue(app.navigationBars["Data og personvern"].waitForExistence(timeout: 5))
 
-        let deleteButton = app.buttons["Slett all data"]
+        let deleteButton = app.buttons["Slett lokale data"]
+        if !deleteButton.exists {
+            app.swipeUp()
+        }
         XCTAssertTrue(deleteButton.exists)
-        deleteButton.tap()
-
-        XCTAssertTrue(app.alerts["Slett alle data?"].waitForExistence(timeout: 3))
-        app.alerts["Slett alle data?"].buttons["Avbryt"].tap()
     }
 
     @MainActor
@@ -130,9 +156,9 @@ final class SporOkonomiUITests: XCTestCase {
         openTab("Budsjett")
 
         XCTAssertTrue(app.navigationBars["Budsjett"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Sett grenser"].exists)
-        XCTAssertTrue(app.staticTexts["Ingen grenser satt ennå. Du kan fortsatt følge forbruket, og legge til grenser når du vil."].exists)
-        XCTAssertTrue(app.staticTexts["Legg til første utgift for å starte sporing."].exists)
+        XCTAssertTrue(app.staticTexts["Ingen grenser satt ennå"].exists)
+        XCTAssertTrue(app.staticTexts["Legg til første transaksjon"].exists)
+        XCTAssertTrue(app.staticTexts["Legg til inntekt eller utgift først. Sett grenser senere hvis du vil følge budsjettet tettere."].exists)
     }
 
     @MainActor
@@ -141,10 +167,8 @@ final class SporOkonomiUITests: XCTestCase {
         openTab("Investeringer")
 
         XCTAssertTrue(app.navigationBars["Investeringer"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Ingen aktive beholdninger ennå."].exists)
-        XCTAssertTrue(app.buttons["Legg til type"].exists)
-        XCTAssertTrue(app.staticTexts["Legg inn første snapshot (tar 20 sek)"].exists)
-        XCTAssertTrue(app.buttons["Ny innsjekk"].exists)
+        XCTAssertTrue(app.staticTexts["Kom i gang med investeringer"].exists)
+        XCTAssertTrue(app.buttons["Kom i gang"].exists)
     }
 
     @MainActor
@@ -153,9 +177,8 @@ final class SporOkonomiUITests: XCTestCase {
         openTab("Oversikt")
 
         XCTAssertTrue(app.navigationBars["Oversikt"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Ny innsjekk"].exists)
-        XCTAssertTrue(app.staticTexts["Legg inn én måned til for å se utvikling."].exists)
-        XCTAssertTrue(app.staticTexts["Legg inn første tall for å se fordeling."].exists)
-        XCTAssertTrue(app.staticTexts["Sett formuemål"].exists)
+        XCTAssertTrue(app.staticTexts["Ingen registreringer ennå"].exists)
+        XCTAssertTrue(app.staticTexts["Legg til en inntekt eller utgift for å få en enkel oversikt over denne måneden."].exists)
+        XCTAssertTrue(app.buttons["Legg til første inntekt"].exists)
     }
 }

@@ -213,6 +213,19 @@ struct OverviewFeatureTests {
 
     @Test
     @MainActor
+    func overviewEmptyStateStartsWithIncomeBeforeExpense() {
+        let viewModel = OverviewViewModel()
+        let now = Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 10)) ?? .now
+        let income = Transaction(date: now, amount: 30_000, kind: .income)
+
+        #expect(viewModel.firstBudgetEntryKind(transactions: [], now: now) == .income)
+        #expect(viewModel.emptyStatePrimaryCTATitle(transactions: [], now: now) == "Legg til første inntekt")
+        #expect(viewModel.firstBudgetEntryKind(transactions: [income], now: now) == .expense)
+        #expect(viewModel.emptyStatePrimaryCTATitle(transactions: [income], now: now) == "Legg til første utgift")
+    }
+
+    @Test
+    @MainActor
     func overviewHeroUsesRoundedKrAndOverLabel() {
         let viewModel = OverviewViewModel()
         let positive = OverviewBudgetStatus(
@@ -284,7 +297,7 @@ struct OverviewFeatureTests {
         let viewModel = OverviewViewModel()
 
         #expect(viewModel.registeredSavingsHeadline() == "Registrert sparing")
-        #expect(viewModel.registeredSavingsSupportText() == "Penger du har registrert til sparing.")
+        #expect(viewModel.registeredSavingsSupportText() == "Penger du har registrert som sparing så langt i år.")
         #expect(viewModel.investmentsEmptySupportText() == "Legg inn verdien når du vil følge utviklingen over tid.")
     }
 

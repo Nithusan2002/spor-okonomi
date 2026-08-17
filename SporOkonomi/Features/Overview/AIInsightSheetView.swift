@@ -76,29 +76,28 @@ final class AIInsightSheetViewModel: ObservableObject {
 struct AIInsightSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: AIInsightSheetViewModel
-    private let isComingSoon = true
 
     init(summary: AIInsightRequestSummary) {
         _viewModel = StateObject(wrappedValue: AIInsightSheetViewModel(summary: summary))
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                content
-                    .padding(24)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-            }
-            .background(AppTheme.background)
-            .navigationTitle("AI-hjelper")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Lukk") {
-                        dismiss()
-                    }
+        if ReleaseFeatureFlags.showAIHelper {
+            NavigationStack {
+                ScrollView {
+                    loadedContent
+                        .padding(24)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
-                if !isComingSoon {
+                .background(AppTheme.background)
+                .navigationTitle("AI-hjelper")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Lukk") {
+                            dismiss()
+                        }
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             Task {
@@ -113,19 +112,11 @@ struct AIInsightSheetView: View {
                     }
                 }
             }
-        }
-        .task {
-            guard !isComingSoon else { return }
-            await viewModel.loadIfNeeded()
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if isComingSoon {
-            comingSoonContent
+            .task {
+                await viewModel.loadIfNeeded()
+            }
         } else {
-            loadedContent
+            EmptyView()
         }
     }
 
@@ -168,34 +159,6 @@ struct AIInsightSheetView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 240, alignment: .topLeading)
         }
-    }
-
-    private var comingSoonContent: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(AppTheme.primary)
-
-                Spacer()
-
-                Text("Kommer snart")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(AppTheme.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(AppTheme.primary.opacity(0.12), in: Capsule())
-            }
-
-            Text("AI-hjelperen er under utvikling")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(AppTheme.textPrimary)
-
-            Text("Snart kan du få en kort oppsummering av måneden og ett tydelig neste steg basert på tallene dine.")
-                .appBodyStyle()
-                .foregroundStyle(AppTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 240, alignment: .topLeading)
     }
 
     private func insightBlock(title: String, text: String) -> some View {
