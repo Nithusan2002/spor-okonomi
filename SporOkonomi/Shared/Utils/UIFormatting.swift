@@ -2,6 +2,53 @@ import Foundation
 import SwiftUI
 import UIKit
 
+// Felles mål for kort og seksjoner. Feature-spesifikt innhold beholder egen layout.
+enum AppSpacing {
+    static let section: CGFloat = 12
+    static let cardPadding: CGFloat = 16
+    static let heroPadding: CGFloat = 20
+}
+
+enum AppCardStyle {
+    case standard
+    case hero
+
+    var cornerRadius: CGFloat {
+        switch self {
+        case .standard: return 16
+        case .hero: return 28
+        }
+    }
+}
+
+private struct AppCardModifier: ViewModifier {
+    let style: AppCardStyle
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+        switch style {
+        case .standard:
+            content
+                .padding(AppSpacing.cardPadding)
+                .background(AppTheme.surface, in: shape)
+                .overlay(shape.stroke(AppTheme.divider, lineWidth: 1))
+        case .hero:
+            content
+                .padding(AppSpacing.heroPadding)
+                .background(
+                    LinearGradient(
+                        colors: [AppTheme.surface, AppTheme.primary.opacity(0.08), AppTheme.surfaceElevated],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: shape
+                )
+                .overlay(shape.stroke(AppTheme.divider.opacity(0.8), lineWidth: 1))
+                .shadow(color: AppTheme.primary.opacity(0.08), radius: 24, y: 14)
+        }
+    }
+}
+
 enum AppProminentCTATone {
     case primary
     case positive
@@ -88,6 +135,11 @@ func formatPeriodKeyAsDate(_ periodKey: String) -> String {
 }
 
 extension View {
+    /// Inkluderer intern padding, bakgrunn og kantlinje.
+    func appCardStyle(_ style: AppCardStyle = .standard) -> some View {
+        modifier(AppCardModifier(style: style))
+    }
+
     func appBigNumberStyle() -> some View {
         self
             .font(.system(.largeTitle, design: .default).weight(.semibold))
@@ -178,4 +230,43 @@ private struct AppKeyboardDismissToolbarModifier: ViewModifier {
             }
         }
     }
+}
+
+private struct AppCardStylesPreview: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpacing.section) {
+                VStack(alignment: .leading, spacing: AppSpacing.section) {
+                    Text("Min formue").appSecondaryStyle()
+                    Text("125 000 kr").appBigNumberStyle()
+                    Text("Oppdatert denne måneden").appSecondaryStyle()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .appCardStyle(.hero)
+
+                VStack(alignment: .leading, spacing: AppSpacing.section) {
+                    Text("Ingen registreringer ennå").appCardTitleStyle()
+                    Text("Legg til en inntekt eller utgift for å komme i gang.")
+                        .appBodyStyle()
+                    Button("Legg til registrering") {}
+                        .appProminentCTAStyle()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .appCardStyle()
+            }
+            .foregroundStyle(AppTheme.textPrimary)
+            .padding(AppSpacing.cardPadding)
+        }
+        .background(AppTheme.background)
+    }
+}
+
+#Preview("Kort – lyst") {
+    AppCardStylesPreview().preferredColorScheme(.light)
+}
+
+#Preview("Kort – mørkt, stor tekst") {
+    AppCardStylesPreview()
+        .preferredColorScheme(.dark)
+        .environment(\.dynamicTypeSize, .accessibility3)
 }

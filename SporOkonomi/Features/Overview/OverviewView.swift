@@ -87,7 +87,7 @@ struct OverviewView: View {
                 emptyStateModule
                     .padding()
             } else {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppSpacing.section) {
                     overviewStatusLine
                     monthlyStatusHeroModule
                     goalModule
@@ -147,7 +147,7 @@ struct OverviewView: View {
     }
 
     private var monthlyStatusHeroModule: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.section) {
             HStack(spacing: 8) {
                 Text(viewModel.heroTitle())
                     .appSecondaryStyle()
@@ -230,9 +230,7 @@ struct OverviewView: View {
             }
 
         }
-        .padding()
-        .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+        .appCardStyle(.hero)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(viewModel.heroTitle())
         .accessibilityValue(areAmountsHidden ? "Beløp skjult" : viewModel.heroAmountText(status: budgetStatus))
@@ -297,9 +295,7 @@ struct OverviewView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding()
-            .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+            .appCardStyle()
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Investeringsoppsummering")
@@ -307,7 +303,7 @@ struct OverviewView: View {
     }
 
     private var emptyStateModule: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.section) {
             Text("Ingen registreringer ennå")
                 .appCardTitleStyle()
 
@@ -322,9 +318,7 @@ struct OverviewView: View {
             .appProminentCTAStyle()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(AppTheme.divider, lineWidth: 1))
+        .appCardStyle()
     }
 
     private var goalModule: some View {
@@ -334,7 +328,7 @@ struct OverviewView: View {
             Button {
                 viewModel.showGoalEditor = true
             } label: {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppSpacing.section) {
                     if activeGoal == nil {
                         HStack(alignment: .top, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -392,10 +386,8 @@ struct OverviewView: View {
                 }
             }
             .buttonStyle(.plain)
-            .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+            .appCardStyle()
         )
     }
 
@@ -467,9 +459,7 @@ struct OverviewView: View {
                 .foregroundStyle(AppTheme.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+        .appCardStyle()
     }
 
     private func overviewMetric(title: String, value: String, tone: Color) -> some View {

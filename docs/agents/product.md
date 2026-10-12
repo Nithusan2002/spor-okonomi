@@ -176,3 +176,15 @@ Prioriter standardisering i denne rekkefølgen:
 3. primær CTA
 4. formskjermer
 5. tomtilstander
+
+## Implementerte Kortstiler
+
+Felles kortstiler ligger i `SporOkonomi/Shared/Utils/UIFormatting.swift`:
+- `appCardStyle()` for vanlige kort: padding 16, radius 16 og kantlinje.
+- `appCardStyle(.hero)` for hovedkort: padding 20, radius 28, subtil gradient og skygge.
+- Modifieren inkluderer intern padding; ikke legg til ekstra kortpadding ved bruk.
+- `AppSpacing.section` gir standard seksjonsavstand på 12.
+
+Stilene er tatt i bruk i Oversikt og hero-/detaljkort i Investeringer.
+Andre feature-spesifikke kort kan migreres ved relevant UI-arbeid.
+Previews i samme fil viser lyst tema og mørkt tema med stor tekst.

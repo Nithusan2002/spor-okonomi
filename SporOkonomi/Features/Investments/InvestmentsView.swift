@@ -227,25 +227,8 @@ struct InvestmentsView: View {
                 }
 
             }
-            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                LinearGradient(
-                    colors: [
-                        AppTheme.surface,
-                        AppTheme.primary.opacity(0.08),
-                        AppTheme.surfaceElevated
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(AppTheme.divider.opacity(0.8), lineWidth: 1)
-            )
-            .shadow(color: AppTheme.primary.opacity(0.08), radius: 24, y: 14)
+            .appCardStyle(.hero)
             .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 1, trailing: 0))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
@@ -992,9 +975,7 @@ private struct BucketDetailView: View {
                     .tint(AppTheme.primary.opacity(0.9))
                     .disabled(isReadOnlyMode)
                 }
-                .padding()
-                .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+                .appCardStyle()
 
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -1138,9 +1119,7 @@ private struct BucketDetailView: View {
                     Text("Basert på totalsummen du legger inn ved innsjekk.")
                         .appSecondaryStyle()
                 }
-                .padding()
-                .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+                .appCardStyle()
 
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -1175,9 +1154,7 @@ private struct BucketDetailView: View {
                         }
                     }
                 }
-                .padding()
-                .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppTheme.divider, lineWidth: 1))
+                .appCardStyle()
             }
             .padding()
         }
