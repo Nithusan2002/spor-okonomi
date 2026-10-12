@@ -67,12 +67,32 @@ Regler:
 
 ## Lokale Skills
 
-Bruk disse når oppgaven matcher:
+Prosjektets skills er førstevalg. `.codex/skills/` er kilden; `.agents/skills/` peker til samme katalog for oppdagelse som i MatLogg. Last bare skills som er relevante for oppgaven.
 
-- `.codex/skills/spor-ios-implementering/SKILL.md` for SwiftUI, SwiftData, ViewModel, services og appkode.
-- `.codex/skills/spor-design/SKILL.md` for UX, skjermstruktur, mikrocopy og UI-konsistens.
-- `.codex/skills/spor-qa/SKILL.md` for review, teststrategi, release-sjekk og kvalitetssikring.
-- `.codex/skills/spor-growth/SKILL.md` for App Store-copy, onboarding, aktivering og veksteksperimenter.
+| Arbeid | Skill |
+| --- | --- |
+| Ny funksjon, endret scope eller større brukerflyt | `spor-produkt` |
+| UX, mikrocopy, skjermstruktur og designsystem | `spor-design` |
+| SwiftUI, ViewModel, services, navigasjon og appkode | `spor-ios-implementering` |
+| Budsjett, sparing, investeringer, faste poster og datoregler | `spor-okonomilogikk` |
+| SwiftData, import/eksport, reset, seeding og migrasjoner | `spor-data` |
+| Konto, Supabase-auth, kontosletting, AI-deling og personvern | `spor-auth-personvern` |
+| Review, regresjoner, tester og kvalitetssikring | `spor-qa` |
+| TestFlight, App Store og release readiness | `spor-release` |
+| App Store-copy, aktivering og veksteksperimenter | `spor-growth` |
+
+Skill-filen ligger i `.codex/skills/<skill-navn>/SKILL.md`.
+
+## Agentroller og samarbeid
+
+Velg fagrolle etter oppgaven fra `docs/agents/agent-roles.md`. Rollene er arbeidsinstruksjoner; de oppretter ikke egne agenter automatisk.
+
+- Små oppgaver løses av én agent med relevante skills.
+- Bruk underagenter når brukeren ber om delegering eller parallelt agentarbeid. Gi hver agent avgrenset scope, berørte filer og ønsket verifikasjon.
+- Ved parallelt arbeid skal én agent eie integrasjonen. Unngå samtidig redigering av samme filer; formidle funn, antakelser og testresultater ved overlevering.
+- Produktendring: produkt → design ved behov → relevante fag-skills → implementering → QA.
+- Dataendring: data → økonomilogikk/auth ved behov → implementering → målrettede tester.
+- Release: relevante fag-skills → QA → releasevurdering.
 
 ## Standard Arbeidsflyt
 
@@ -127,4 +147,4 @@ En oppgave er ferdig når:
 - `docs/agents/product.md` for produktmål, posisjonering og UI-konsistens.
 - `docs/agents/workflow.md` for arbeidsflyt, TDD, build-policy og leveranseformat.
 - `docs/agents/safe-change-rules.md` for scope-kontroll og trygg endring.
-- `docs/agents/agent-roles.md` for Designer-, iOS-, QA-, Release- og Growth-agent.
+- `docs/agents/agent-roles.md` for produkt-, design-, iOS-, økonomi-, data-, auth/personvern-, QA-, release- og growth-roller.
