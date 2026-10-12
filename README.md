@@ -48,16 +48,65 @@ Viktige mapper:
 - `SporOkonomi/Domain` modeller og tjenester
 - `SporOkonomi/Shared` tema, utilities og delt UI-logikk
 - `SporOkonomiTests` enhetstester
-- `docs` statisk launch-side og juridiske sider for publisering
+- `docs` prosjektdokumentasjon, statisk launch-side og juridiske sider for publisering
 
 ## Kjør lokalt
+
+Krav:
+
+- macOS med Xcode og installert iOS Simulator-runtime
+- iOS 18.0 eller nyere på simulator eller enhet
+- siste simulatorbuild er verifisert med Xcode 27.0; minste støttede Xcode-versjon er ikke verifisert
+
 
 1. Åpne `SporOkonomi.xcodeproj` i Xcode.
 2. Velg scheme `SporOkonomi`.
 3. Velg simulator eller fysisk enhet.
 4. Kjør appen med `Cmd + R`.
 
+For fysisk enhet må du velge ditt eget utviklerteam under `Signing & Capabilities`.
+Lokal bruk kan testes via «fortsett uten konto» uten å konfigurere egen backend.
+
+### Valgfri Supabase-konfigurasjon
+
+Autentisering leser følgende felt fra [SporOkonomiInfo.plist](SporOkonomiInfo.plist):
+
+| Felt | Bruk |
+| --- | --- |
+| `SUPABASE_URL` | URL til Supabase-prosjektet |
+| `SUPABASE_PUBLISHABLE_KEY` | Publiserbar klientnøkkel |
+| `SUPABASE_REDIRECT_SCHEME` | URL-skjema for auth-retur |
+| `SUPABASE_REDIRECT_HOST` | Host for auth-retur |
+
+Ved eget backend-oppsett må retur-URL-en tillates i Supabase, og skjemaet må matche
+appens `CFBundleURLTypes`. Appen registrerer nå skjemaet `sporokonomi`.
+Manglende eller ugyldig konfigurasjon gir feil i kontoflyten; lokal bruk er fortsatt tilgjengelig.
+Bruk kun publiserbar klientnøkkel i appen. Backend-hemmeligheter skal ikke ligge i appen eller committes.
+
 ## Test og verifikasjon
+
+Velg scheme `SporOkonomi` og kjør `Cmd + U` i Xcode. Schemet inkluderer både
+`SporOkonomiTests` og `SporOkonomiUITests`.
+
+Simulatorbuild fra terminal:
+
+```sh
+xcodebuild -project SporOkonomi.xcodeproj -scheme SporOkonomi \
+  -configuration Debug -sdk iphonesimulator \
+  -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+```
+
+For tester, finn en tilgjengelig simulator og bruk dens ID:
+
+```sh
+xcrun simctl list devices available
+xcodebuild -project SporOkonomi.xcodeproj -scheme SporOkonomi \
+  -destination 'platform=iOS Simulator,id=<SIMULATOR-ID>' test
+```
+
+Manuell smoke-test for TestFlight beskrives i [INTERNAL_TESTING.md](INTERNAL_TESTING.md).
+En grønn build alene bekrefter ikke at tester eller release-sjekker er gjennomført.
+
 
 Repoet inneholder enhetstester for blant annet:
 
@@ -78,9 +127,9 @@ Repoet inneholder enhetstester for blant annet:
 
 Relevante filer:
 
-- `docs/legal/personvern-no.md`
-- `docs/legal/vilkar-no.md`
-- `SporOkonomi/PrivacyInfo.xcprivacy`
+- [Personvern](docs/legal/personvern-no.md)
+- [Vilkår](docs/legal/vilkar-no.md)
+- [Privacy manifest](SporOkonomi/PrivacyInfo.xcprivacy)
 
 ## Launch-side og GitHub Pages
 
@@ -127,10 +176,11 @@ Dette repoet er offentlig for portfolio-, lærings- og evalueringsformål.
 
 Koden, designressurser og produktmateriell er ikke lisensiert for gjenbruk, distribusjon eller kommersiell bruk uten skriftlig tillatelse.
 
-Se `LICENSE` for detaljer.
+Se [LICENSE](LICENSE) for detaljer.
 
-## Relaterte filer
+## Dokumentasjon
 
-- `AGENTS.md` arbeidskontrakt og prosjektregler for agenter
-- `docs/project/` produktbrief, roadmap, teknisk plan og release-readiness
-- `AppStoreConnect-metadata.md` App Store-arbeidsnotater
+- [Prosjektdokumenter](docs/project/README.md): produktbrief, roadmap, arkitektur og release-sjekkliste
+- [Designsystem](docs/project/design-system.md): tema, tekststiler, kort og previews
+- [AGENTS.md](AGENTS.md): arbeidskontrakt og prosjektregler
+- [App Store-notater](AppStoreConnect-metadata.md): metadata og publiseringsarbeid
